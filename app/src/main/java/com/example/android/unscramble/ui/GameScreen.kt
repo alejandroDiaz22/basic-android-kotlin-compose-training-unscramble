@@ -34,6 +34,8 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,21 +44,30 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.android.unscramble.R
 import com.example.android.unscramble.ui.theme.UnscrambleTheme
 
 
 @Composable
-fun GameScreen(modifier: Modifier = Modifier) {
+fun GameScreen(modifier: Modifier = Modifier, gameViewModel: GameViewModel = viewModel()
+) {
+    val gameUiState by gameViewModel.uiState.collectAsState()
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
+
     ) {
 
         GameStatus()
-        GameLayout()
+        GameLayout(currentScrambledWord = gameUiState.currentScrambledWord,
+            onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
+            onKeyboardDone = { },
+            userGuess = gameViewModel.userGuess,
+            )
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -108,13 +119,21 @@ fun GameStatus(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun GameLayout(modifier: Modifier = Modifier) {
+fun GameLayout(
+    modifier: Modifier = Modifier,
+    currentScrambledWord: String,
+    onUserGuessChanged: (String) -> Unit,
+    onKeyboardDone: () -> Unit,
+    userGuess: String,
+
+
+    ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
 
         ) {
         Text(
-            text = "scrambleun",
+            text = currentScrambledWord,
             fontSize = 45.sp,
             modifier = modifier.align(Alignment.CenterHorizontally)
         )
@@ -124,17 +143,18 @@ fun GameLayout(modifier: Modifier = Modifier) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         OutlinedTextField(
-            value = "",
+
+            value = userGuess,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            onValueChange = { },
+            onValueChange = onUserGuessChanged,
             label = { Text(stringResource(R.string.enter_your_word)) },
             isError = false,
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
-                onDone = { }
+                onDone = {onKeyboardDone()}
             ),
         )
     }
